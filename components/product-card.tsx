@@ -1,0 +1,194 @@
+"use client";
+
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+import { Button } from "@/components/button";
+import { Modal } from "@/components/modal";
+import { Reveal } from "@/components/reveal";
+import { useCart } from "@/hooks/use-cart";
+import type { Product } from "@/types";
+
+type ProductCardProps = {
+  direction?: "left" | "right" | "up";
+  product: Product;
+};
+
+export function ProductCard({
+  direction = "up",
+  product,
+}: ProductCardProps) {
+  const { addItem } = useCart();
+  const router = useRouter();
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
+  const revealClass =
+    direction === "left"
+      ? "scroll-reveal scroll-reveal-left"
+      : direction === "right"
+        ? "scroll-reveal scroll-reveal-right"
+        : "scroll-reveal";
+
+  const handleAddToCart = () => {
+    addItem(product);
+  };
+
+  const handleCheckout = () => {
+    addItem(product);
+    router.push("/cart");
+  };
+
+  return (
+    <>
+      <Reveal
+        className={`${revealClass} group glass-panel flex h-full flex-col overflow-hidden rounded-[2rem] border border-white/50 p-5`}
+      >
+        <button
+          type="button"
+          onClick={() => setIsDetailsOpen(true)}
+          className="text-left"
+          aria-label={`View details for ${product.name}`}
+        >
+          <div className="relative mb-5 aspect-[5/4] overflow-hidden rounded-[1.5rem] bg-slate-100">
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+              className="object-cover transition duration-500 group-hover:scale-105"
+            />
+          </div>
+        </button>
+        <div className="flex flex-1 flex-col gap-3">
+          <div className="flex flex-wrap gap-2">
+            {product.categoryTags.map((tag) => (
+              <span
+                key={`${product.id}-${tag}`}
+                className="rounded-full bg-[#f8ecd9] px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#946d35]"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+          <div className="flex items-start justify-between gap-4">
+            <button
+              type="button"
+              onClick={() => setIsDetailsOpen(true)}
+              className="text-left"
+            >
+              <h3 className="text-2xl font-bold text-slate-950">{product.name}</h3>
+            </button>
+            <div className="text-right">
+              {product.originalPrice ? (
+                <p className="text-xs text-slate-400 line-through">EGP {product.originalPrice}</p>
+              ) : null}
+              <span className="text-sm font-semibold text-[#a07233]">EGP {product.price}</span>
+            </div>
+          </div>
+          <p className="flex-1 text-sm leading-7 text-slate-600">{product.description}</p>
+          <div className="mt-auto space-y-3">
+            <p
+              className={`text-sm font-semibold ${
+                product.inStock ? "text-emerald-700" : "text-rose-600"
+              }`}
+            >
+              {product.inStock ? "In stock" : "Out of stock"}
+            </p>
+            <div className="flex flex-col gap-3">
+              <Button variant="secondary" onClick={() => setIsDetailsOpen(true)} fullWidth>
+                View Details
+              </Button>
+              <Button onClick={handleAddToCart} fullWidth disabled={!product.inStock}>
+                {product.inStock ? "Add to Cart" : "Unavailable"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Reveal>
+
+      <Modal
+        eyebrow="Product Details"
+        isOpen={isDetailsOpen}
+        onClose={() => setIsDetailsOpen(false)}
+        title={product.name}
+      >
+        <div className="space-y-6">
+          <div className="relative aspect-[5/4] overflow-hidden rounded-[1.8rem] bg-slate-100">
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              sizes="(max-width: 768px) 100vw, 720px"
+              className="object-cover"
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {product.categoryTags.map((tag) => (
+              <span
+                key={`modal-${product.id}-${tag}`}
+                className="rounded-full bg-[#f8ecd9] px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#946d35]"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+
+          <div className="grid gap-4 rounded-[1.6rem] border border-[#ead8ba] bg-[#fffaf2] p-5 sm:grid-cols-2">
+            <div>
+              <p className="text-xs uppercase tracking-[0.24em] text-[#9a7438]">Price</p>
+              <div className="mt-2 flex items-center gap-3">
+                <p className="text-2xl font-bold text-slate-950">EGP {product.price}</p>
+                {product.originalPrice ? (
+                  <p className="text-sm text-slate-400 line-through">EGP {product.originalPrice}</p>
+                ) : null}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.24em] text-[#9a7438]">Availability</p>
+              <p
+                className={`mt-2 text-base font-semibold ${
+                  product.inStock ? "text-emerald-700" : "text-rose-600"
+                }`}
+              >
+                {product.inStock ? "In stock" : "Out of stock"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.24em] text-[#9a7438]">Brand</p>
+              <p className="mt-2 text-sm text-slate-700">{product.brand || "Not specified"}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.24em] text-[#9a7438]">Warranty</p>
+              <p className="mt-2 text-sm text-slate-700">{product.warranty || "Not specified"}</p>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs uppercase tracking-[0.24em] text-[#9a7438]">Description</p>
+            <p className="mt-3 text-sm leading-8 text-slate-600">{product.description}</p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button
+              onClick={handleCheckout}
+              fullWidth
+              disabled={!product.inStock}
+            >
+              {product.inStock ? "Checkout" : "Unavailable"}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={handleAddToCart}
+              fullWidth
+              disabled={!product.inStock}
+            >
+              Add to Cart
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </>
+  );
+}
