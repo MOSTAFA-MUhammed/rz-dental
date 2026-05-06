@@ -19,8 +19,8 @@ export function SiteFooter() {
     <footer className="border-t border-[#ead8ba]/70 bg-[#fffaf2]/75 backdrop-blur-xl">
       <div className="section-shell grid gap-6 py-8 text-sm text-[#6a5a46] lg:grid-cols-[1fr_auto_1fr] lg:items-center">
         <div className="text-center lg:text-left">
-          <p className="font-semibold text-[#24190e]">RZ Dental</p>
-          <p>Dental booking flow for clinics, labs, and supply requests.</p>
+          <img src="/Logo-png-rz.png" alt="RZ Dental logo" className="mx-auto h-10 w-auto lg:mx-0" />
+          {/* <p>Dental booking flow for clinics, labs, and supply requests.</p> */}
         </div>
 
         <div className="flex flex-col items-center gap-3 text-center">
@@ -60,7 +60,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="text-center mb-2">
-          <p className="font-semibold text-[#24190e]">Provided by Mostafa</p>
+          <p className="font-semibold text-[#24190e]">Powered by Mostafa</p>
       </div>
     </footer>
   );

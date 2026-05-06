@@ -12,13 +12,48 @@ type ProductsPageProps = {
   initialProducts: Product[];
 };
 
-const PRODUCTS_PER_PAGE = 10;
+const PRODUCTS_PER_PAGE = 12;
+const CATEGORY_ORDER = [
+  "Consumbles",
+  "Equipments",
+  "Instruments",
+  "Diagnosis",
+  "Restorative",
+  "Endodontics",
+  "Perio & surgery",
+  "Prosthetics",
+  "Orthodontics",
+  "Laboratories",
+  "Micro motors",
+  "Contra & adaptor",
+  "Burs",
+  "Endo motor & apex",
+  "Amlgamator",
+  "Light cures",
+  "Loupe",
+  "Units & autoclaves & compressors",
+  "Dummy head and cast",
+  "Level 1",
+  "Level 2",
+  "Level 3",
+  "Level 4",
+  "Level 5",
+  "Oil and accessories",
+  "Services and spare parts",
+  "Dental products",
+  "Others",
+] as const;
+
+const categoryOrderIndex = new Map(
+  CATEGORY_ORDER.map((category, index) => [category.toLowerCase(), index]),
+);
 
 export function ProductsPage({ initialProducts }: ProductsPageProps) {
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
+  const [categorySearchQuery, setCategorySearchQuery] = useState("");
   const [targetProductId, setTargetProductId] = useState(() =>
     typeof window !== "undefined"
       ? new URLSearchParams(window.location.search).get("product") ?? ""
@@ -43,10 +78,43 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
         seen.add(normalized);
         return true;
       })
-      .sort((left, right) => left.localeCompare(right));
+      .sort((left, right) => {
+        const leftIndex = categoryOrderIndex.get(left.toLowerCase());
+        const rightIndex = categoryOrderIndex.get(right.toLowerCase());
+
+        if (leftIndex != null && rightIndex != null) {
+          return leftIndex - rightIndex;
+        }
+
+        if (leftIndex != null) {
+          return -1;
+        }
+
+        if (rightIndex != null) {
+          return 1;
+        }
+
+        return left.localeCompare(right);
+      });
   }, [products]);
 
+  const filteredCategoryOptions = useMemo(() => {
+    const normalizedCategorySearch = categorySearchQuery.trim().toLowerCase();
+
+    if (!normalizedCategorySearch) {
+      return categoryOptions;
+    }
+
+    return categoryOptions.filter((category) =>
+      category.toLowerCase().includes(normalizedCategorySearch),
+    );
+  }, [categoryOptions, categorySearchQuery]);
+
   const filteredProducts = useMemo(() => {
+    if (targetProductId) {
+      return products.filter((product) => product.id === targetProductId);
+    }
+
     const normalizedQuery = deferredQuery.trim().toLowerCase();
 
     return products.filter((product) => {
@@ -65,7 +133,7 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
 
       return matchesQuery && matchesCategory;
     });
-  }, [deferredQuery, products, selectedCategory]);
+  }, [deferredQuery, products, selectedCategory, targetProductId]);
 
   const targetProductPage = useMemo(() => {
     if (!targetProductId || products.length === 0) {
@@ -148,8 +216,7 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
             Discover modern dental supplies built for fast clinic ordering.
           </h1>
           <p className="section-copy mt-4">
-            Add products directly to your cart, then finalize the booking with your
-            contact and address details.
+            Add products to your cart and complete your purchase using your contact and address details.
           </p>
         </div>
 
@@ -178,7 +245,10 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setIsCategoryMenuOpen((open) => !open)}
+                onClick={() => {
+                  setCategorySearchQuery("");
+                  setIsCategoryMenuOpen((open) => !open);
+                }}
                 className="flex w-full items-center justify-between rounded-[1.5rem] border border-[#ead8ba]/80 bg-white/90 px-4 py-4 text-left shadow-[0_16px_50px_rgba(110,78,28,0.08)] backdrop-blur-xl transition hover:border-[#d3b37c]"
                 aria-expanded={isCategoryMenuOpen}
                 aria-haspopup="menu"
@@ -201,8 +271,18 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
 
               {isCategoryMenuOpen ? (
                 <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-20 overflow-hidden rounded-[1.6rem] border border-[#ead8ba] bg-[linear-gradient(180deg,#fffdf8_0%,#fff8ef_100%)] p-2 shadow-[0_24px_70px_rgba(78,52,16,0.18)]">
+                  <div className="mb-2 px-1">
+                    <input
+                      type="search"
+                      value={categorySearchQuery}
+                      onChange={(event) => setCategorySearchQuery(event.target.value)}
+                      placeholder="Search category"
+                      className="w-full rounded-[1rem] border border-[#ead8ba]/80 bg-white/90 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#b98a46]"
+                    />
+                  </div>
+
                   <div className="max-h-80 space-y-1 overflow-y-auto pr-1">
-                    {["all", ...categoryOptions].map((category) => {
+                    {["all", ...filteredCategoryOptions].map((category) => {
                       const isAll = category === "all";
                       const isSelected = selectedCategory === category;
 
@@ -233,6 +313,12 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
                         </button>
                       );
                     })}
+
+                    {filteredCategoryOptions.length === 0 ? (
+                      <div className="rounded-[1.1rem] px-4 py-3 text-sm text-slate-500">
+                        No category found.
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               ) : null}
@@ -269,11 +355,11 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
       ) : null}
 
       {isLoading ? (
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3">
           {Array.from({ length: PRODUCTS_PER_PAGE }, (_, index) => (
             <div
               key={index}
-              className="h-[380px] animate-pulse rounded-[2rem] border border-white/60 bg-white/75"
+              className="h-[320px] animate-pulse rounded-[1.4rem] border border-white/60 bg-white/75 sm:h-[380px] sm:rounded-[2rem]"
             />
           ))}
         </div>
@@ -286,12 +372,31 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
                 <span className="font-semibold text-slate-950">{filteredProducts.length}</span> products
               </p>
               <p>
-                {selectedCategory === "all" ? "All categories" : selectedCategory}
+                {targetProductId
+                  ? "Selected product"
+                  : selectedCategory === "all"
+                    ? "All categories"
+                    : selectedCategory}
               </p>
             </div>
           ) : null}
 
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {targetProductId ? (
+            <div className="mb-6 flex justify-start">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setTargetProductId("");
+                  setCurrentPage(1);
+                  window.history.replaceState({}, "", "/products");
+                }}
+              >
+                Show All Products
+              </Button>
+            </div>
+          ) : null}
+
+          <div className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3">
             {paginatedProducts.map((product, index) => (
               <div
                 key={product.id}

@@ -3,11 +3,13 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Share2 } from "lucide-react";
 
 import { Button } from "@/components/button";
 import { Modal } from "@/components/modal";
 import { Reveal } from "@/components/reveal";
 import { useCart } from "@/hooks/use-cart";
+import { useToast } from "@/components/toast-provider";
 import type { Product } from "@/types";
 
 type ProductCardProps = {
@@ -21,6 +23,7 @@ export function ProductCard({
 }: ProductCardProps) {
   const { addItem } = useCart();
   const router = useRouter();
+  const { notify } = useToast();
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const revealClass =
@@ -39,33 +42,66 @@ export function ProductCard({
     router.push("/cart");
   };
 
+  const handleShare = async () => {
+    const shareUrl =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/products?product=${encodeURIComponent(product.id)}`
+        : `/products?product=${encodeURIComponent(product.id)}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          text: `Check out ${product.name} from RZ Dental`,
+          title: product.name,
+          url: shareUrl,
+        });
+        return;
+      }
+
+      await navigator.clipboard.writeText(shareUrl);
+      notify("Product link copied", "info");
+    } catch {
+      notify("Unable to share this product right now.", "error");
+    }
+  };
+
   return (
     <>
       <Reveal
-        className={`${revealClass} group glass-panel flex h-full flex-col overflow-hidden rounded-[2rem] border border-white/50 p-5`}
+        className={`${revealClass} group glass-panel flex h-full flex-col overflow-hidden rounded-[1.4rem] border border-white/50 p-3 sm:rounded-[2rem] sm:p-5`}
       >
-        <button
-          type="button"
-          onClick={() => setIsDetailsOpen(true)}
-          className="text-left"
-          aria-label={`View details for ${product.name}`}
-        >
-          <div className="relative mb-5 aspect-[5/4] overflow-hidden rounded-[1.5rem] bg-slate-100">
-            <Image
-              src={product.image}
-              alt={product.name}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-              className="object-cover transition duration-500 group-hover:scale-105"
-            />
-          </div>
-        </button>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={handleShare}
+            className="absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/85 text-[#7f5d2c] shadow-[0_10px_24px_rgba(63,42,12,0.12)] backdrop-blur-xl transition hover:bg-white"
+            aria-label={`Share ${product.name}`}
+          >
+            <Share2 className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsDetailsOpen(true)}
+            className="block w-full text-left"
+            aria-label={`View details for ${product.name}`}
+          >
+            <div className="relative mb-4 aspect-[5/4] overflow-hidden rounded-[1.2rem] bg-slate-100 sm:mb-5 sm:rounded-[1.5rem]">
+              <Image
+                src={product.image}
+                alt={product.name}
+                fill
+                sizes="(max-width: 768px) 50vw, (max-width: 1280px) 50vw, 33vw"
+                className="object-cover transition duration-500 group-hover:scale-105"
+              />
+            </div>
+          </button>
+        </div>
         <div className="flex flex-1 flex-col gap-3">
           <div className="flex flex-wrap gap-2">
-            {product.categoryTags.map((tag) => (
+            {product.categoryTags.slice(0, 2).map((tag) => (
               <span
                 key={`${product.id}-${tag}`}
-                className="rounded-full bg-[#f8ecd9] px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#946d35]"
+                className="rounded-full bg-[#f8ecd9] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#946d35] sm:px-3 sm:text-xs sm:tracking-[0.16em]"
               >
                 {tag}
               </span>
@@ -77,29 +113,43 @@ export function ProductCard({
               onClick={() => setIsDetailsOpen(true)}
               className="text-left"
             >
-              <h3 className="text-2xl font-bold text-slate-950">{product.name}</h3>
+              <h3 className="text-base font-bold leading-5 text-slate-950 sm:text-2xl sm:leading-normal">
+                {product.name}
+              </h3>
             </button>
             <div className="text-right">
               {product.originalPrice ? (
                 <p className="text-xs text-slate-400 line-through">EGP {product.originalPrice}</p>
               ) : null}
-              <span className="text-sm font-semibold text-[#a07233]">EGP {product.price}</span>
+              <span className="text-xs font-semibold text-[#a07233] sm:text-sm">EGP {product.price}</span>
             </div>
           </div>
-          <p className="flex-1 text-sm leading-7 text-slate-600">{product.description}</p>
+          <p className="flex-1 text-xs leading-5 text-slate-600 sm:text-sm sm:leading-7">
+            {product.description}
+          </p>
           <div className="mt-auto space-y-3">
             <p
-              className={`text-sm font-semibold ${
+              className={`text-xs font-semibold sm:text-sm ${
                 product.inStock ? "text-emerald-700" : "text-rose-600"
               }`}
             >
               {product.inStock ? "In stock" : "Out of stock"}
             </p>
             <div className="flex flex-col gap-3">
-              <Button variant="secondary" onClick={() => setIsDetailsOpen(true)} fullWidth>
+              <Button
+                variant="secondary"
+                onClick={() => setIsDetailsOpen(true)}
+                fullWidth
+                className="min-h-10 px-3 text-xs sm:min-h-12 sm:px-5 sm:text-sm"
+              >
                 View Details
               </Button>
-              <Button onClick={handleAddToCart} fullWidth disabled={!product.inStock}>
+              <Button
+                onClick={handleAddToCart}
+                fullWidth
+                disabled={!product.inStock}
+                className="min-h-10 px-3 text-xs sm:min-h-12 sm:px-5 sm:text-sm"
+              >
                 {product.inStock ? "Add to Cart" : "Unavailable"}
               </Button>
             </div>
@@ -185,6 +235,9 @@ export function ProductCard({
               disabled={!product.inStock}
             >
               Add to Cart
+            </Button>
+            <Button variant="ghost" onClick={handleShare} fullWidth>
+              Share
             </Button>
           </div>
         </div>

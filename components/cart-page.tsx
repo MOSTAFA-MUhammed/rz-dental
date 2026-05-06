@@ -35,9 +35,9 @@ export function CartPage() {
     <main className="section-shell flex flex-1 flex-col py-12">
       <div className="mb-10 max-w-3xl">
         <span className="section-tag">Cart</span>
-        <h1 className="section-title mt-4">Review your basket and submit your booking request.</h1>
+        <h1 className="section-title mt-4">Review your basket and complete your purchase.</h1>
         <p className="section-copy mt-4">
-          Update quantities, remove products, and complete the booking form when your
+          Update quantities, remove products, and complete the buying form when your
           selection is ready.
         </p>
       </div>
@@ -115,7 +115,7 @@ export function CartPage() {
                 }}
                 disabled={!selectedPaymentMethod}
               >
-                Book Now
+                Buy Now
               </Button>
               {!selectedPaymentMethod ? (
                 <p className="mt-3 text-sm text-amber-700">
@@ -132,7 +132,7 @@ export function CartPage() {
               </p>
               <h2 className="mt-2 text-2xl font-bold text-slate-950">Choose your payment method</h2>
               <p className="mt-2 text-sm text-slate-600">
-                Select the payment method here, then press Book Now to complete the popup form.
+                Select the payment method here, then press Buy Now to complete the popup form.
               </p>
             </div>
 

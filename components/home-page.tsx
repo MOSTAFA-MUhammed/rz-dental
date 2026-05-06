@@ -197,7 +197,7 @@ export function HomePage({ allProducts, featuredProducts }: HomePageProps) {
               copy: "Edit basket quantities, remove items, and confirm the exact requested mix.",
             },
             {
-              title: "Book",
+              title: "Buy",
               copy: "Submit clinic details once and send the full request to the admin instantly.",
             },
           ].map((item, index) => (
@@ -220,7 +220,7 @@ export function HomePage({ allProducts, featuredProducts }: HomePageProps) {
         <Reveal className="scroll-reveal mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <span className="section-tag">Featured Products</span>
-            <h2 className="section-title mt-4">High-demand essentials ready for booking.</h2>
+            <h2 className="section-title mt-4">High-demand essentials ready for buy.</h2>
           </div>
           <Link href="/products">
             <Button variant="secondary">View All Products</Button>
@@ -340,7 +340,7 @@ export function HomePage({ allProducts, featuredProducts }: HomePageProps) {
                 </div>
 
                 <p className="mt-7 text-sm font-medium text-slate-500">
-                  Pin the branch on your route before sending the booking request.
+                  Pin the branch on your route before completing your purchase.
                 </p>
               </div>
             </div>
