@@ -34,7 +34,7 @@ export const paymentMethods: PaymentMethod[] = [
   {
     description: "Pay securely using InstaPay with 0% extra fees.",
     details: [
-      "01010430798",
+      "01068640141",
       "Transfer the full order amount using InstaPay to the number above.",
       "Send a screenshot of the successful transfer via WhatsApp to the same number.",
     ],
@@ -45,7 +45,7 @@ export const paymentMethods: PaymentMethod[] = [
   {
     description: "Pay with Vodafone Cash at no additional fees.",
     details: [
-      "01010430798",
+      "01068640141",
       "Transfer the full order amount to the Vodafone Cash wallet number above.",
       "Send the payment screenshot on WhatsApp after transfer confirmation.",
     ],
@@ -112,6 +112,7 @@ export function BookingForm({ onComplete, paymentMethod }: BookingFormProps) {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+
     const nextErrors = validate(values);
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
@@ -121,6 +122,11 @@ export function BookingForm({ onComplete, paymentMethod }: BookingFormProps) {
 
     if (items.length === 0) {
       notify("Your cart is empty.", "error");
+      return;
+    }
+    
+    if (orderTotal < 300) {
+      notify("Minimum order is 300 EGP to place a booking.", "error");
       return;
     }
 
@@ -235,8 +241,12 @@ export function BookingForm({ onComplete, paymentMethod }: BookingFormProps) {
         </p>
       </div>
 
-      <Button type="submit" fullWidth disabled={isSubmitting}>
-        {isSubmitting ? "Submitting booking..." : "Submit Booking"}
+      <Button type="submit"  fullWidth   disabled={isSubmitting || orderTotal < 300}>
+         {orderTotal < 300
+          ? "Minimum order is 300 EGP"
+          : isSubmitting
+          ? "Submitting booking..."
+          : "Submit Booking"}
       </Button>
     </form>
   );

@@ -2,15 +2,27 @@ import "server-only";
 
 import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
+import { MongoClient } from "mongodb";
 
 import type { BookingRecord } from "@/types";
 
-const dataDirectory = path.join(process.cwd(), "data");
-const filePath = path.join(dataDirectory, "bookings.json");
+const localDataDirectory = path.join(process.cwd(), "data");
+const vercelDataDirectory = path.join("/tmp", "rz-dental");
 
-type RequireLike = (specifier: string) => unknown;
+let mongoClientPromise: Promise<MongoClient> | null = null;
+
+function getDataDirectory() {
+  return process.env.VERCEL ? vercelDataDirectory : localDataDirectory;
+}
+
+function getFilePath() {
+  return path.join(getDataDirectory(), "bookings.json");
+}
 
 async function persistToFile(booking: BookingRecord) {
+  const dataDirectory = getDataDirectory();
+  const filePath = getFilePath();
+
   await mkdir(dataDirectory, { recursive: true });
 
   try {
@@ -23,7 +35,16 @@ async function persistToFile(booking: BookingRecord) {
   }
 }
 
-export async function persistBooking(booking: BookingRecord, require: RequireLike) {
+async function getMongoClient(uri: string) {
+  if (!mongoClientPromise) {
+    const client = new MongoClient(uri);
+    mongoClientPromise = client.connect().then(() => client);
+  }
+
+  return mongoClientPromise;
+}
+
+export async function persistBooking(booking: BookingRecord) {
   const mongoUri = process.env.MONGODB_URI;
 
   if (!mongoUri) {
@@ -32,27 +53,12 @@ export async function persistBooking(booking: BookingRecord, require: RequireLik
   }
 
   try {
-    const mongodb = require("mongodb") as {
-      MongoClient: new (uri: string) => {
-        connect: () => Promise<void>;
-        close: () => Promise<void>;
-        db: (name: string) => {
-          collection: (name: string) => {
-            insertOne: (document: BookingRecord) => Promise<void>;
-          };
-        };
-      };
-    };
-
-    const client = new mongodb.MongoClient(mongoUri);
-    await client.connect();
+    const client = await getMongoClient(mongoUri);
 
     await client
       .db(process.env.MONGODB_DB_NAME || "rz-dental")
       .collection(process.env.MONGODB_COLLECTION || "bookings")
       .insertOne(booking);
-
-    await client.close();
   } catch (error) {
     console.error("MongoDB persistence failed, falling back to file storage", error);
     await persistToFile(booking);

@@ -1,7 +1,5 @@
 import "server-only";
 
-import { createRequire } from "module";
-
 import { persistBooking } from "@/lib/storage";
 import type {
   BookingPayload,
@@ -9,8 +7,6 @@ import type {
   BookingResult,
   BookingValidationErrors,
 } from "@/types";
-
-const require = createRequire(import.meta.url);
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-EG", {
@@ -140,7 +136,7 @@ async function sendEmailNotification(booking: BookingRecord) {
   }
 
   try {
-    const nodemailer = require("nodemailer") as {
+    const nodemailer = (await import("nodemailer")) as {
       createTransport: (config: Record<string, unknown>) => {
         sendMail: (config: Record<string, unknown>) => Promise<unknown>;
       };
@@ -240,7 +236,7 @@ export async function createBooking(payload: BookingPayload): Promise<BookingRes
     shippingMethod: payload.shippingMethod,
   };
 
-  await persistBooking(booking, require);
+  await persistBooking(booking);
 
   const [emailSent, whatsappSent] = await Promise.all([
     sendEmailNotification(booking),
