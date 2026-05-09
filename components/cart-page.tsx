@@ -9,10 +9,20 @@ import { Button } from "@/components/button";
 import { CartItem } from "@/components/cart-item";
 import { Modal } from "@/components/modal";
 import { useCart } from "@/hooks/use-cart";
+import type { CartLine, PaymentMethod } from "@/types";
+
+type CompletedOrderSummary = {
+  itemCount: number;
+  items: CartLine[];
+  paymentMethod: PaymentMethod;
+  total: number;
+};
 
 export function CartPage() {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [completedOrderSummary, setCompletedOrderSummary] =
+    useState<CompletedOrderSummary | null>(null);
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
   const { items, totalItems } = useCart();
 
@@ -47,6 +57,55 @@ export function CartPage() {
           <div className="rounded-[1.8rem] border border-emerald-200 bg-emerald-50/80 p-5 text-sm font-medium text-emerald-900">
             {successMessage}
           </div>
+
+          {completedOrderSummary ? (
+            <div className="glass-panel rounded-[2rem] border border-white/60 p-6">
+              <div className="flex flex-col gap-3 border-b border-[#ead8ba] pb-5 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="font-mono text-xs uppercase tracking-[0.28em] text-[#9a7438]">
+                    Order Summary
+                  </p>
+                  <h2 className="mt-2 text-2xl font-bold text-slate-950">
+                    Your submitted order
+                  </h2>
+                </div>
+                <div className="text-left sm:text-right">
+                  <p className="text-sm text-slate-600">
+                    {completedOrderSummary.itemCount} items
+                  </p>
+                  <p className="text-2xl font-bold text-slate-950">
+                    EGP {completedOrderSummary.total}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {completedOrderSummary.items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-start justify-between gap-4 rounded-[1.2rem] bg-white/75 px-4 py-3"
+                  >
+                    <div>
+                      <p className="font-semibold text-slate-950">{item.name}</p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        Qty {item.quantity} x EGP {item.price}
+                      </p>
+                    </div>
+                    <p className="shrink-0 text-sm font-bold text-[#8f6932]">
+                      EGP {item.price * item.quantity}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-5 rounded-[1.2rem] border border-[#ead8ba] bg-[#fffaf2] px-4 py-3 text-sm text-[#5f503e]">
+                Payment:{" "}
+                <span className="font-semibold text-[#24190e]">
+                  {completedOrderSummary.paymentMethod.label}
+                </span>
+              </div>
+            </div>
+          ) : null}
 
           <div className="overflow-hidden rounded-[2.2rem] border border-[#e5d4b8] bg-white/80 shadow-[0_24px_80px_rgba(63,42,12,0.08)]">
             <div className="relative aspect-[4/5] w-full bg-[#f8f4ec] sm:aspect-[16/9]">
@@ -191,16 +250,17 @@ export function CartPage() {
       )}
 
       <Modal
-        eyebrow="Booking"
+        eyebrow="buy details"
         isOpen={isBookingOpen}
         onClose={() => setIsBookingOpen(false)}
-        title="Complete your booking details"
+        title="Complete your buying details"
       >
         {selectedPaymentMethod ? (
           <BookingForm
             paymentMethod={selectedPaymentMethod}
-            onComplete={() => {
-              setSuccessMessage("Successfully submitted. We will contact you soon.");
+            onComplete={(message, orderSummary) => {
+              setSuccessMessage(message);
+              setCompletedOrderSummary(orderSummary);
               setIsBookingOpen(false);
             }}
           />

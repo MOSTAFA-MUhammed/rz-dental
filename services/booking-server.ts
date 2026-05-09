@@ -55,7 +55,7 @@ function formatBookingMessage(booking: BookingRecord) {
     `Address: ${booking.customer.address}`,
     `Notes: ${booking.customer.notes || "N/A"}`,
     `Shipping Method: ${booking.shippingMethod.label}`,
-    `Shipping Fee: ${formatCurrency(booking.shippingMethod.fee)}`,
+    // `Shipping Fee: ${formatCurrency(booking.shippingMethod.fee)}`,
     `Shipping ETA: ${booking.shippingMethod.eta}`,
     `Payment Method: ${booking.paymentMethod.label} (${booking.paymentMethod.feeLabel})`,
     `Order Total: ${formatCurrency(total)}`,
@@ -95,7 +95,6 @@ function formatBookingHtml(booking: BookingRecord) {
           <p style="margin:0 0 8px;"><strong>Address:</strong> ${booking.customer.address}</p>
           <p style="margin:0 0 8px;"><strong>Notes:</strong> ${booking.customer.notes || "N/A"}</p>
           <p style="margin:0 0 8px;"><strong>Shipping Method:</strong> ${booking.shippingMethod.label}</p>
-          <p style="margin:0 0 8px;"><strong>Shipping Fee:</strong> ${formatCurrency(booking.shippingMethod.fee)}</p>
           <p style="margin:0 0 8px;"><strong>Arrival Window:</strong> ${booking.shippingMethod.eta}</p>
           <p style="margin:0 0 8px;"><strong>Payment Method:</strong> ${booking.paymentMethod.label} (${booking.paymentMethod.feeLabel})</p>
           <p style="margin:0 0 24px;"><strong>Created At:</strong> ${booking.createdAt}</p>
@@ -116,7 +115,6 @@ function formatBookingHtml(booking: BookingRecord) {
 
           <div style="margin-top:20px;padding:16px 18px;border-radius:16px;background:#ecfeff;border:1px solid #a5f3fc;">
             <strong>Products Total:</strong> ${formatCurrency(total)}<br />
-            <strong>Shipping Fee:</strong> ${formatCurrency(booking.shippingMethod.fee)}<br />
             <strong>Final Total:</strong> ${formatCurrency(total + booking.shippingMethod.fee)}
           </div>
         </div>

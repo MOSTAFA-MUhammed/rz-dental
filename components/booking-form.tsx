@@ -7,11 +7,19 @@ import { Input } from "@/components/input";
 import { useToast } from "@/components/toast-provider";
 import { useCart } from "@/hooks/use-cart";
 import { submitBooking } from "@/services/booking-client";
-import type { BookingFormValues, PaymentMethod, ShippingMethod } from "@/types";
+import type { BookingFormValues, CartLine, PaymentMethod, ShippingMethod } from "@/types";
 
 type BookingFormProps = {
   paymentMethod: PaymentMethod;
-  onComplete: (message: string) => void;
+  onComplete: (
+    message: string,
+    orderSummary: {
+      itemCount: number;
+      items: CartLine[];
+      paymentMethod: PaymentMethod;
+      total: number;
+    },
+  ) => void;
 };
 
 type FieldErrors = Partial<Record<keyof BookingFormValues, string>>;
@@ -150,10 +158,17 @@ export function BookingForm({ onComplete, paymentMethod }: BookingFormProps) {
         return;
       }
 
+      const completedOrderSummary = {
+        itemCount: totals.itemCount,
+        items: items.map((item) => ({ ...item })),
+        paymentMethod,
+        total: orderTotal,
+      };
+
       clearCart();
       setValues(initialValues);
       notify(result.message, "success");
-      onComplete(result.message);
+      onComplete(result.message, completedOrderSummary);
     } catch {
       notify("Something went wrong while sending your booking.", "error");
     } finally {

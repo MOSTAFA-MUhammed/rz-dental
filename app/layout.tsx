@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import "./globals.css";
 
+import { FloatingCartButton } from "@/components/floating-cart-button";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { CartProvider } from "@/context/cart-context";
@@ -24,6 +25,7 @@ export default function RootLayout({
           <div className="relative flex min-h-screen flex-col overflow-hidden">
             <SiteHeader />
             <div className="flex flex-1 flex-col">{children}</div>
+            <FloatingCartButton />
             <SiteFooter />
           </div>
         </CartProvider>

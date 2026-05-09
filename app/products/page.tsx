@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+
 import { ProductsPage } from "@/components/products-page";
 import { getProducts } from "@/lib/products";
 
@@ -9,5 +11,9 @@ export const metadata = {
 export default async function Page() {
   const products = await getProducts();
 
-  return <ProductsPage initialProducts={products} />;
+  return (
+    <Suspense fallback={null}>
+      <ProductsPage initialProducts={products} />
+    </Suspense>
+  );
 }

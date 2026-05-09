@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Share2 } from "lucide-react";
+import { Share2, ShoppingCart } from "lucide-react";
 
 import { Button } from "@/components/button";
 import { Modal } from "@/components/modal";
@@ -21,10 +21,11 @@ export function ProductCard({
   direction = "up",
   product,
 }: ProductCardProps) {
-  const { addItem } = useCart();
+  const { addItem, items } = useCart();
   const router = useRouter();
   const { notify } = useToast();
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const cartItem = items.find((item) => item.id === product.id);
 
   const revealClass =
     direction === "left"
@@ -150,7 +151,14 @@ export function ProductCard({
                 disabled={!product.inStock}
                 className="min-h-10 px-3 text-xs sm:min-h-12 sm:px-5 sm:text-sm"
               >
-                {product.inStock ? "Add to Cart" : "Unavailable"}
+                {product.inStock ? (
+                  <span className="inline-flex items-center gap-2">
+                    <ShoppingCart className="h-4 w-4" />
+                    {cartItem ? "Add More" : "Add to Cart"}
+                  </span>
+                ) : (
+                  "Unavailable"
+                )}
               </Button>
             </div>
           </div>

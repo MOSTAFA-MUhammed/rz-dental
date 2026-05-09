@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/button";
@@ -49,19 +50,44 @@ const categoryOrderIndex = new Map(
 );
 
 export function ProductsPage({ initialProducts }: ProductsPageProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const [categorySearchQuery, setCategorySearchQuery] = useState("");
-  const [targetProductId, setTargetProductId] = useState(() =>
-    typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search).get("product") ?? ""
-      : "",
-  );
+  const targetProductId = searchParams.get("product") ?? "";
   const deferredQuery = useDeferredValue(query);
   const { isLoading, products } = useProducts(initialProducts);
   const categoryMenuRef = useRef<HTMLDivElement | null>(null);
+  const productsTopRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollToProductsTop = () => {
+    window.requestAnimationFrame(() => {
+      productsTopRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  };
+
+  const clearProductTarget = () => {
+    if (targetProductId) {
+      router.replace("/products", { scroll: false });
+    }
+  };
+
+  const showAllProducts = () => {
+    clearProductTarget();
+    setCurrentPage(1);
+  };
+
+  const goToPage = (page: number) => {
+    clearProductTarget();
+    setCurrentPage(page);
+    scrollToProductsTop();
+  };
 
   const categoryOptions = useMemo(() => {
     const seen = new Set<string>();
@@ -226,7 +252,7 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
             type="search"
             value={query}
             onChange={(event) => {
-              setTargetProductId("");
+              clearProductTarget();
               setQuery(event.target.value);
               setCurrentPage(1);
             }}
@@ -291,7 +317,7 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
                           key={category}
                           type="button"
                           onClick={() => {
-                            setTargetProductId("");
+                            clearProductTarget();
                             setSelectedCategory(category);
                             setCurrentPage(1);
                             setIsCategoryMenuOpen(false);
@@ -329,7 +355,7 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
             <Button
               variant={selectedCategory === "all" ? "primary" : "secondary"}
               onClick={() => {
-                setTargetProductId("");
+                clearProductTarget();
                 setSelectedCategory("all");
                 setCurrentPage(1);
               }}
@@ -341,7 +367,7 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
                 key={category}
                 variant={selectedCategory === category ? "primary" : "secondary"}
                 onClick={() => {
-                  setTargetProductId("");
+                  clearProductTarget();
                   setSelectedCategory(category);
                   setCurrentPage(1);
                 }}
@@ -366,7 +392,10 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
       ) : (
         <>
           {filteredProducts.length > 0 ? (
-            <div className="mb-6 flex flex-col gap-4 rounded-[1.8rem] border border-white/60 bg-white/65 px-5 py-4 text-sm text-slate-600 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
+            <div
+              ref={productsTopRef}
+              className="scroll-mt-28 mb-6 flex flex-col gap-4 rounded-[1.8rem] border border-white/60 bg-white/65 px-5 py-4 text-sm text-slate-600 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between"
+            >
               <p>
                 Showing <span className="font-semibold text-slate-950">{paginatedProducts.length}</span> of{" "}
                 <span className="font-semibold text-slate-950">{filteredProducts.length}</span> products
@@ -385,11 +414,7 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
             <div className="mb-6 flex justify-start">
               <Button
                 variant="secondary"
-                onClick={() => {
-                  setTargetProductId("");
-                  setCurrentPage(1);
-                  window.history.replaceState({}, "", "/products");
-                }}
+                onClick={showAllProducts}
               >
                 Show All Products
               </Button>
@@ -416,10 +441,7 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
               <div className="flex items-center gap-3">
                 <Button
                   variant="secondary"
-                  onClick={() => {
-                    setTargetProductId("");
-                    setCurrentPage(Math.max(1, safePage - 1));
-                  }}
+                  onClick={() => goToPage(Math.max(1, safePage - 1))}
                   disabled={safePage === 1}
                 >
                   Previous
@@ -428,10 +450,7 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
                   {safePage} / {totalPages}
                 </span>
                 <Button
-                  onClick={() => {
-                    setTargetProductId("");
-                    setCurrentPage(Math.min(totalPages, safePage + 1));
-                  }}
+                  onClick={() => goToPage(Math.min(totalPages, safePage + 1))}
                   disabled={safePage === totalPages}
                 >
                   Next
