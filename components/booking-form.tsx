@@ -247,7 +247,7 @@ export function BookingForm({ onComplete, paymentMethod }: BookingFormProps) {
 
       <div className="rounded-[1.6rem] border border-[#ead5b1] bg-[#faf2e2]/85 p-4 text-sm text-[#655541]">
         <p className="font-semibold text-[#24190e]">
-          {totals.itemCount} items ready for booking
+          {totals.itemCount} items ready for buying
         </p>
         <p className="mt-1">Products total: EGP {totals.total}</p>
         {/* <p className="mt-1">Shipping fee: EGP {shippingMethod.fee}</p> */}
@@ -260,8 +260,8 @@ export function BookingForm({ onComplete, paymentMethod }: BookingFormProps) {
          {orderTotal < 300
           ? "Minimum order is 300 EGP"
           : isSubmitting
-          ? "Submitting booking..."
-          : "Submit Booking"}
+          ? "Submitting buying..."
+          : "Submit Buying"}
       </Button>
     </form>
   );
