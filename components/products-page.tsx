@@ -56,6 +56,8 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
+  const [isSearchMenuOpen, setIsSearchMenuOpen] = useState(false);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
   const [categorySearchQuery, setCategorySearchQuery] = useState("");
   const targetProductId = searchParams.get("product") ?? "";
   const deferredQuery = useDeferredValue(query);
@@ -78,8 +80,25 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
     }
   };
 
+  const selectSuggestedProduct = (product: Product) => {
+    setQuery(product.name);
+    setCurrentPage(1);
+    setIsSearchMenuOpen(false);
+    setActiveSuggestionIndex(0);
+    router.replace(`/products?product=${encodeURIComponent(product.id)}`, { scroll: false });
+  };
+
+  const submitSearch = () => {
+    clearProductTarget();
+    setCurrentPage(1);
+    scrollToProductsTop();
+  };
+
   const showAllProducts = () => {
     clearProductTarget();
+    setQuery("");
+    setIsSearchMenuOpen(false);
+    setActiveSuggestionIndex(0);
     setCurrentPage(1);
   };
 
@@ -136,6 +155,23 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
     );
   }, [categoryOptions, categorySearchQuery]);
 
+  const suggestedProducts = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    if (!normalizedQuery) {
+      return [];
+    }
+
+    return products
+      .filter((product) =>
+        [product.name, product.description, product.category, ...(product.brand ? [product.brand] : [])]
+          .join(" ")
+          .toLowerCase()
+          .includes(normalizedQuery),
+      )
+      .slice(0, 6);
+  }, [products, query]);
+
   const filteredProducts = useMemo(() => {
     if (targetProductId) {
       return products.filter((product) => product.id === targetProductId);
@@ -152,6 +188,7 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
           .includes(normalizedQuery);
 
       const matchesCategory =
+        Boolean(normalizedQuery) ||
         selectedCategory === "all" ||
         product.categoryTags.some(
           (tag) => tag.toLowerCase() === selectedCategory.toLowerCase(),
@@ -215,23 +252,53 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
       return;
     }
 
-    const frameId = window.requestAnimationFrame(() => {
+    const productExists = products.some((product) => product.id === targetProductId);
+
+    if (!productExists) {
+      return;
+    }
+
+    let timeoutId: number | undefined;
+    let attempts = 0;
+
+    const scrollToTargetProduct = () => {
       const element = document.querySelector<HTMLElement>(
         `[data-product-id="${targetProductId}"]`,
       );
 
       if (element) {
         element.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
       }
-    });
 
-    return () => window.cancelAnimationFrame(frameId);
-  }, [safePage, isLoading, targetProductId]);
+      attempts += 1;
+
+      if (attempts < 8) {
+        timeoutId = window.setTimeout(scrollToTargetProduct, 120);
+      }
+    };
+
+    const frameId = window.requestAnimationFrame(scrollToTargetProduct);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [products, safePage, isLoading, targetProductId]);
 
   const selectedCategoryLabel =
     selectedCategory === "all"
       ? "All Categories"
       : categoryOptions.find((category) => category === selectedCategory) ?? selectedCategory;
+  const hasActiveSearch = query.trim().length > 0;
+  const shouldShowSearchMenu = isSearchMenuOpen && hasActiveSearch;
+  const clampedActiveSuggestionIndex = Math.min(
+    activeSuggestionIndex,
+    Math.max(suggestedProducts.length - 1, 0),
+  );
 
   return (
     <main className="section-shell flex flex-1 flex-col py-12">
@@ -246,20 +313,99 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
           </p>
         </div>
 
-        <label className="w-full max-w-md">
-          <span className="sr-only">Search products</span>
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => {
-              clearProductTarget();
-              setQuery(event.target.value);
-              setCurrentPage(1);
-            }}
-            placeholder="Search by product, category, or use case"
-            className="w-full rounded-full border border-[#ead8ba]/80 bg-white/85 px-5 py-4 text-sm outline-none ring-0 backdrop-blur-xl transition focus:border-[#b98a46] focus:bg-white"
-          />
-        </label>
+        <form
+          className="relative w-full max-w-md"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const suggestedProduct = suggestedProducts[clampedActiveSuggestionIndex];
+
+            if (suggestedProduct) {
+              selectSuggestedProduct(suggestedProduct);
+              return;
+            }
+
+            submitSearch();
+          }}
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+              setIsSearchMenuOpen(false);
+            }
+          }}
+        >
+          <label>
+            <span className="sr-only">Search products</span>
+            <input
+              type="search"
+              value={query}
+              onFocus={() => setIsSearchMenuOpen(true)}
+              onChange={(event) => {
+                clearProductTarget();
+                setQuery(event.target.value);
+                setCurrentPage(1);
+                setActiveSuggestionIndex(0);
+                setIsSearchMenuOpen(true);
+              }}
+              onKeyDown={(event) => {
+                if (!shouldShowSearchMenu || suggestedProducts.length === 0) {
+                  return;
+                }
+
+                if (event.key === "ArrowDown") {
+                  event.preventDefault();
+                  setActiveSuggestionIndex((index) => (index + 1) % suggestedProducts.length);
+                }
+
+                if (event.key === "ArrowUp") {
+                  event.preventDefault();
+                  setActiveSuggestionIndex(
+                    (index) => (index - 1 + suggestedProducts.length) % suggestedProducts.length,
+                  );
+                }
+              }}
+              placeholder="Search by product, category, or use case"
+              className="w-full rounded-full border border-[#ead8ba]/80 bg-white/85 px-5 py-4 text-sm outline-none ring-0 backdrop-blur-xl transition focus:border-[#b98a46] focus:bg-white"
+            />
+          </label>
+
+          {shouldShowSearchMenu ? (
+            <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-30 overflow-hidden rounded-[1.5rem] border border-[#ead8ba] bg-[linear-gradient(180deg,#fffdf9_0%,#fff7eb_100%)] p-2 shadow-[0_24px_70px_rgba(78,52,16,0.16)]">
+              {suggestedProducts.length > 0 ? (
+                <div className="space-y-1">
+                  {suggestedProducts.map((product, index) => (
+                    <button
+                      key={product.id}
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => selectSuggestedProduct(product)}
+                      onMouseEnter={() => setActiveSuggestionIndex(index)}
+                      className={`flex w-full items-center justify-between gap-4 rounded-[1.1rem] px-4 py-3 text-left transition ${
+                        clampedActiveSuggestionIndex === index
+                          ? "bg-white text-slate-950 shadow-[0_10px_26px_rgba(103,72,26,0.08)]"
+                          : "text-slate-700 hover:bg-white/90 hover:text-slate-950"
+                      }`}
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-semibold">
+                          {product.name}
+                        </span>
+                        <span className="mt-1 block truncate text-xs uppercase tracking-[0.16em] text-[#9a7438]">
+                          {product.categoryTags.slice(0, 2).join(" • ") || product.category}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-sm font-semibold text-[#8f6932]">
+                        EGP {product.price}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-[1.1rem] px-4 py-5 text-sm text-slate-600">
+                  No matching products found.
+                </div>
+              )}
+            </div>
+          ) : null}
+        </form>
       </div>
 
       {!isLoading && categoryOptions.length > 0 ? (
@@ -403,7 +549,9 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
               <p>
                 {targetProductId
                   ? "Selected product"
-                  : selectedCategory === "all"
+                  : hasActiveSearch
+                    ? "Search results across all categories"
+                    : selectedCategory === "all"
                     ? "All categories"
                     : selectedCategory}
               </p>
