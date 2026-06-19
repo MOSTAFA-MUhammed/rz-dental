@@ -44,22 +44,29 @@ export function ProductCard({
     router.push("/cart");
   };
 
-const handleShare = async (event?: React.MouseEvent<HTMLButtonElement>) => {
-  event?.preventDefault();
-  event?.stopPropagation();
+  const handleShare = async () => {
+      const shareUrl =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/products?product=${encodeURIComponent(product.id)}`
+          : `/products?product=${encodeURIComponent(product.id)}`;
 
-  const shareUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/products?product=${encodeURIComponent(product.id)}`
-      : `/products?product=${encodeURIComponent(product.id)}`;
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            text: `Check out ${product.name} from RZ Dental`,
+            title: product.name,
+            url: shareUrl,
+          });
+          return;
+        }
 
-  try {
-    await navigator.clipboard.writeText(shareUrl);
-    notify("Product link copied", "info");
-  } catch {
-    notify("Unable to copy this product link right now.", "error");
-  }
-};
+        await navigator.clipboard.writeText(shareUrl);
+        notify("Product link copied", "info");
+      } catch {
+        notify("Unable to share this product right now.", "error");
+      }
+    };
+
 
   return (
     <>
