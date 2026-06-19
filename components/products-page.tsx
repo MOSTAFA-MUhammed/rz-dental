@@ -9,6 +9,13 @@ import { ProductCard } from "@/components/product-card";
 import { useProducts } from "@/hooks/use-products";
 import type { Product } from "@/types";
 
+import {
+  ChevronsLeft,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsRight,
+} from "lucide-react";
+
 type ProductsPageProps = {
   initialProducts: Product[];
 };
@@ -586,22 +593,41 @@ export function ProductsPage({ initialProducts }: ProductsPageProps) {
 
           {filteredProducts.length > PRODUCTS_PER_PAGE ? (
             <div className="mt-10 flex flex-col gap-4 rounded-[2rem] border border-white/60 justify-center text-center bg-white/70 p-5 backdrop-blur-xl sm:flex-row sm:items-center">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <Button
                   variant="secondary"
-                  onClick={() => goToPage(Math.max(1, safePage - 1))}
+                  onClick={() => goToPage(1)}
                   disabled={safePage === 1}
                 >
-                  Previous
+                  <ChevronsLeft className="h-4 w-4" />
                 </Button>
-                <span className="min-w-20 text-center text-sm font-semibold text-slate-950">
+
+                <Button
+                  variant="secondary"
+                  onClick={() => goToPage(safePage - 1)}
+                  disabled={safePage === 1}
+                >
+                  {/* <ChevronLeft className="h-4 w-4" /> */}
+                  {"Previous"}
+                </Button>
+
+                <span className="min-w-20 text-center text-sm font-semibold">
                   {safePage} / {totalPages}
                 </span>
+
                 <Button
-                  onClick={() => goToPage(Math.min(totalPages, safePage + 1))}
+                  onClick={() => goToPage(safePage + 1)}
                   disabled={safePage === totalPages}
                 >
-                  Next
+                  {/* <ChevronRight className="h-4 w-4" /> */}
+                  {"Next"}
+                </Button>
+
+                <Button
+                  onClick={() => goToPage(totalPages)}
+                  disabled={safePage === totalPages}
+                >
+                  <ChevronsRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>

@@ -25,6 +25,7 @@ export function ProductCard({
   const router = useRouter();
   const { notify } = useToast();
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const cartItem = items.find((item) => item.id === product.id);
 
   const revealClass =
@@ -92,7 +93,7 @@ export function ProductCard({
                 alt={product.name}
                 fill
                 sizes="(max-width: 768px) 50vw, (max-width: 1280px) 50vw, 33vw"
-                className="object-cover transition duration-500 group-hover:scale-105"
+                className="object-object transition duration-500 group-hover:scale-105"
               />
             </div>
           </button>
@@ -125,9 +126,30 @@ export function ProductCard({
               <span className="text-xs font-semibold text-[#a07233] sm:text-sm">EGP {product.price}</span>
             </div>
           </div>
-          <p className="flex-1 text-xs leading-5 text-slate-600 sm:text-sm sm:leading-7">
+          {/* <p className="flex-1 text-xs leading-5 text-slate-600 sm:text-sm sm:leading-7">
             {product.description}
-          </p>
+          </p> */}
+
+          <div className="flex-1">
+            <p
+              className={`text-xs leading-5 text-slate-600 sm:text-sm sm:leading-7 ${
+                expanded ? "" : "line-clamp-2"
+              }`}
+            >
+              {product.description}
+            </p>
+
+            {product.description.length > 100 && (
+              <button
+                type="button"
+                onClick={() => setExpanded(!expanded)}
+                className="mt-1 text-xs font-medium text-[#a07233] hover:underline"
+              >
+                {expanded ? "See less" : "See more"}
+              </button>
+            )}
+          </div>
+
           <div className="mt-auto space-y-3">
             <p
               className={`text-xs font-semibold sm:text-sm ${
@@ -178,7 +200,6 @@ export function ProductCard({
               alt={product.name}
               fill
               sizes="(max-width: 768px) 100vw, 720px"
-              className="object-cover"
             />
           </div>
 
@@ -225,7 +246,27 @@ export function ProductCard({
 
           <div>
             <p className="text-xs uppercase tracking-[0.24em] text-[#9a7438]">Description</p>
-            <p className="mt-3 text-sm leading-8 text-slate-600">{product.description}</p>
+            {/* <p className="mt-3 text-sm leading-8 text-slate-600">{product.description}</p> */}
+<div className="flex-1">
+  <p
+    className={`text-xs leading-5 text-slate-600 sm:text-sm sm:leading-7 ${
+      expanded ? "" : "line-clamp-2"
+    }`}
+  >
+    {product.description}
+  </p>
+
+  {product.description.length > 100 && (
+    <button
+      type="button"
+      onClick={() => setExpanded(!expanded)}
+      className="mt-1 text-xs font-medium text-[#a07233] hover:underline"
+    >
+      {expanded ? "See less" : "See more"}
+    </button>
+  )}
+</div>
+
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
