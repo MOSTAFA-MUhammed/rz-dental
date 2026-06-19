@@ -44,28 +44,34 @@ export function ProductCard({
     router.push("/cart");
   };
 
-  const handleShare = async () => {
-    const shareUrl =
-      typeof window !== "undefined"
-        ? `${window.location.origin}/products?product=${encodeURIComponent(product.id)}`
-        : `/products?product=${encodeURIComponent(product.id)}`;
+const handleShare = async (
+  event?: React.MouseEvent<HTMLButtonElement>
+) => {
+  event?.preventDefault();
+  event?.stopPropagation();
 
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          text: `Check out ${product.name} from RZ Dental`,
-          title: product.name,
-          url: shareUrl,
-        });
-        return;
-      }
+  const shareUrl = `${window.location.origin}/products?product=${encodeURIComponent(product.id)}`;
 
-      await navigator.clipboard.writeText(shareUrl);
-      notify("Product link copied", "info");
-    } catch {
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: product.name,
+        text: `Check out ${product.name} from RZ Dental`,
+        url: shareUrl,
+      });
+      return;
+    }
+
+    await navigator.clipboard.writeText(shareUrl);
+    notify("Product link copied", "info");
+  } catch (error) {
+    // المستخدم ضغط Cancel في نافذة الشير
+    if ((error as Error)?.name !== "AbortError") {
       notify("Unable to share this product right now.", "error");
     }
-  };
+  }
+};
+
 
   return (
     <>
@@ -247,25 +253,25 @@ export function ProductCard({
           <div>
             <p className="text-xs uppercase tracking-[0.24em] text-[#9a7438]">Description</p>
             {/* <p className="mt-3 text-sm leading-8 text-slate-600">{product.description}</p> */}
-<div className="flex-1">
-  <p
-    className={`text-xs leading-5 text-slate-600 sm:text-sm sm:leading-7 ${
-      expanded ? "" : "line-clamp-2"
-    }`}
-  >
-    {product.description}
-  </p>
+            <div className="flex-1">
+              <p
+                className={`text-xs leading-5 text-slate-600 sm:text-sm sm:leading-7 ${
+                  expanded ? "" : "line-clamp-2"
+                }`}
+              >
+                {product.description}
+              </p>
 
-  {product.description.length > 100 && (
-    <button
-      type="button"
-      onClick={() => setExpanded(!expanded)}
-      className="mt-1 text-xs font-medium text-[#a07233] hover:underline"
-    >
-      {expanded ? "See less" : "See more"}
-    </button>
-  )}
-</div>
+              {product.description.length > 100 && (
+                <button
+                  type="button"
+                  onClick={() => setExpanded(!expanded)}
+                  className="mt-1 text-xs font-medium text-[#a07233] hover:underline"
+                >
+                  {expanded ? "See less" : "See more"}
+                </button>
+              )}
+            </div>
 
           </div>
 
